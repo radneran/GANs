@@ -16,7 +16,7 @@ kde(x_out[:,0], x_out[:,1], bbox=(-2,2,-2,2))
 # Experiments to run
 # Three different tests: MOG convergence, Re and Im eigv,
 # Vector space i.e. streamline plot ard eqm
-# How do gradient regularization as in WGAN-GP & Gradient-reg GAN
+# How do gradient regularizations as in WGAN-GP & Gradient-reg GAN
 # differ in how they affect the resulting vector space
 # Factors to test
 # Loss function: Wasserstien (W), W + Numerics, W + GP, W + Reg
