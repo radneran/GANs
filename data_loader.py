@@ -1,10 +1,11 @@
 import math
 import os
+
 import torch
 import torchvision
 import torchvision.transforms.transforms as transforms
-from torch.utils.data import Dataset
 from PIL import Image
+from torch.utils.data import Dataset, DataLoader
 
 
 def get_fashion_mnist(bs, size=32, train=True):
@@ -18,11 +19,12 @@ def get_fashion_mnist(bs, size=32, train=True):
                                               train=train,
                                               transform=fatrans,
                                               download=True)
-    fmloader = torch.utils.data.DataLoader(fmset,
-                                           batch_size=bs,
-                                           shuffle=True,
-                                           num_workers=2)
+    fmloader = DataLoader(fmset,
+                          batch_size=bs,
+                          shuffle=True,
+                          num_workers=2)
     return fmset, fmloader
+
 
 def get_cifar10(bs, train=True):
     citrans = transforms.Compose(
@@ -30,13 +32,14 @@ def get_cifar10(bs, train=True):
          transforms.Normalize((0, 0, 0), (1, 1, 1))]
     )
     ciset = torchvision.datasets.CIFAR10("./data", train=train,
-                                              transform=citrans,
-                                              download=True)
-    ciloader = torch.utils.data.DataLoader(ciset,
-                                           batch_size=bs,
-                                           shuffle=True,
-                                           num_workers=2)
+                                         transform=citrans,
+                                         download=True)
+    ciloader = DataLoader(ciset,
+                          batch_size=bs,
+                          shuffle=True,
+                          num_workers=2)
     return ciset, ciloader
+
 
 def get_classdata_cifar10(dataset, class_):
     classdata = torch.FloatTensor()
@@ -44,10 +47,11 @@ def get_classdata_cifar10(dataset, class_):
         img, label = data
         if label == class_:
             classdata = torch.cat((classdata,
-                                    torch.unsqueeze(img, 0)))
+                                   torch.unsqueeze(img, 0)))
     return classdata
 
-def get_celebA(bs, root_dir, size=32, test_split = 0.2, train=True, shuffle=True):
+
+def get_celebA(bs, root_dir, size=32, test_split=0.2, train=True, shuffle=True):
     catrans = transforms.Compose(
         [transforms.Resize(size),
          transforms.CenterCrop(size),
@@ -57,11 +61,12 @@ def get_celebA(bs, root_dir, size=32, test_split = 0.2, train=True, shuffle=True
 
     caset = CelebADataset(root_dir, catrans,
                           test_split=test_split, train=train)
-    caloader = torch.utils.data.DataLoader(caset,
-                                           batch_size=bs,
-                                           shuffle=shuffle,
-                                           num_workers=16)
+    caloader = DataLoader(caset,
+                          batch_size=bs,
+                          shuffle=shuffle,
+                          num_workers=16)
     return caset, caloader
+
 
 class CelebADataset(Dataset):
     def __init__(self, root_dir, transform,
@@ -88,5 +93,3 @@ class CelebADataset(Dataset):
                                      "test2.png")
         return self.transform(image) if self.transform \
             else image
-
-

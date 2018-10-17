@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.manifold import t_sne
 from sklearn.decomposition import PCA
-from Data_loader import get_cifar10, get_classdata_cifar10
+from data_loader import get_cifar10, get_classdata_cifar10
 traincifar, _ =  get_cifar10(32)
 testcifar, _ = get_cifar10(32, train=False)
 

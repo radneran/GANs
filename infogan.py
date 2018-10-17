@@ -1,10 +1,11 @@
 import torch.optim as optim
 import torchvision.utils as vutils
-from Data_loader import *
+
+from data_loader import *
 from model import *
 
 nz, bs = 32, 32
-fmset, fmloader = get_cifar10(bs)
+trainset, trainloader = get_cifar10(bs)
 # imgs, _ = iter(fmloader).next()
 # plt.imshow(vutils.make_grid(imgs).numpy()[0],cmap='gray')
 # plt.show()
@@ -18,26 +19,28 @@ d_optim = optim.Adam(D.parameters(), 5e-5, betas=(0.5, 0.9))
 epochs, iterations = 10, 0
 fixed_noise = torch.randn(bs, nz).cuda()
 
+
 def get_loss(D, G, real, type='standard'):
     fake = G()
     if type == 'wasserstein':
         L_D = D(real).mean() - D(fake.detach()).mean()
         L_G = - D(fake).mean()
-    else: # return standard loss
-        L_D = -(torch.log(torch.sigmoid(D(real))).mean() \
+    else:  # return standard loss
+        L_D = -(torch.log(torch.sigmoid(D(real))).mean()
                 + torch.log(1 - torch.sigmoid(D(torch.tanh(fake).detach()))).mean())
         L_G = (-torch.log(torch.sigmoid(D(torch.tanh(fake))))).mean()
     return L_D, L_G, fake
 
+
 for epoch in range(epochs):
-    for data in fmloader:
+    for data in trainloader:
         d_optim.zero_grad()
         g_optim.zero_grad()
         real, _ = data
         real = real.cuda()
         # real = data.cuda()
         # fake = G()
-        L_D, L_G, _ = get_loss(D, G, real)
+        L_D, L_G, fake = get_loss(D, G, real)
         L_D.backward()
         d_optim.step()
         L_G.backward()
