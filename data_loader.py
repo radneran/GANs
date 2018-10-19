@@ -8,12 +8,12 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
 
-def get_fashion_mnist(bs, size=32, train=True):
+def get_fashion_mnist(bs, size=32, train=True, mu=0.5, std=0.5):
     fatrans = transforms.Compose(
         [transforms.Grayscale(3),
          transforms.Resize(size),
          transforms.ToTensor(),
-         transforms.Normalize((0, 0, 0), (1, 1, 1))]
+         transforms.Normalize((mu, mu, mu), (std, std, std))]
     )
     fmset = torchvision.datasets.FashionMNIST("./data",
                                               train=train,
@@ -26,10 +26,10 @@ def get_fashion_mnist(bs, size=32, train=True):
     return fmset, fmloader
 
 
-def get_cifar10(bs, train=True):
+def get_cifar10(bs, train=True, mu=0.5, std=0.5):
     citrans = transforms.Compose(
         [transforms.ToTensor(),
-         transforms.Normalize((0, 0, 0), (1, 1, 1))]
+         transforms.Normalize((mu, mu, mu), (std, std, std))]
     )
     ciset = torchvision.datasets.CIFAR10("./data", train=train,
                                          transform=citrans,
@@ -51,12 +51,13 @@ def get_classdata_cifar10(dataset, class_):
     return classdata
 
 
-def get_celebA(bs, root_dir, size=32, test_split=0.2, train=True, shuffle=True):
+def get_celebA(bs, root_dir, size=32, test_split=0.2,
+               train=True, shuffle=True, mu=0.5, std=0.5):
     catrans = transforms.Compose(
         [transforms.Resize(size),
          transforms.CenterCrop(size),
          transforms.ToTensor(),
-         transforms.Normalize((0, 0, 0), (1, 1, 1))]
+         transforms.Normalize((mu, mu, mu), (std, std, std))]
     )
 
     caset = CelebADataset(root_dir, catrans,
@@ -88,8 +89,5 @@ class CelebADataset(Dataset):
         im_name = "%06d.jpg" % (idx)
         path = os.path.join(self.root_dir, im_name)
         image = Image.open(path)
-        image.save("test1.png")
-        torchvision.utils.save_image(self.transform(image),
-                                     "test2.png")
         return self.transform(image) if self.transform \
             else image

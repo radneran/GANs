@@ -7,8 +7,8 @@ from utils import *
 # hyper-params
 proportional_gain = 0.001  # lambda_k
 diversity_ratio = 0.3  # gamma
-lr_generator = 1e-4
-lr_discriminator = 1e-4
+lr_generator = 5e-5
+lr_discriminator = 5e-5
 batch_size = 32
 z_dim = 32
 
@@ -18,8 +18,8 @@ G = BEGAN_Generator().cuda()
 balancer = 0  # k
 weight_init(D, 0, 0.02)
 weight_init(G, 0, 0.02)
-g_optim = Adam(G.parameters(), lr=lr_generator, betas=(0.9, 0.999))
-d_optim = Adam(D.parameters(), lr=lr_discriminator, betas=(0.9, 0.999))
+g_optim = Adam(G.parameters(), lr=lr_generator, betas=(0.5, 0.9))
+d_optim = Adam(D.parameters(), lr=lr_discriminator, betas=(0.5, 0.9))
 
 epochs, iterations = 10, 0
 fixed_noise = torch.randn(batch_size, z_dim).cuda()
@@ -33,8 +33,9 @@ fixed_noise = torch.randn(batch_size, z_dim).cuda()
 
 def autoencoder_loss(D, x, p=1):
     # lp distance between x and D(x)
-    return (((x - D(x)).abs()**p).sum()**(1/p))/(x.size()[0]) # meaned over batchsize
-    #return (x - D(x)).abs().mean()
+    return (((x - D(x)).abs()**p).sum()**(1/p))/(x.numel()) #
+    # meaned over all pixels; scales the image-wise norm down
+    # so that norm does not grow with image-size
 
 def began_loss(D, G, real):
     global balancer
@@ -52,8 +53,8 @@ for epoch in range(epochs):
         d_optim.zero_grad()
         L_D, L_G, D_real, D_gen = began_loss(D, G, real)
         L_D.backward()
-        L_G.backward()
         d_optim.step()
+        L_G.backward()
         g_optim.step()
         # update balancer
         current_balance = diversity_ratio * D_real.detach() - D_gen.detach()
@@ -69,6 +70,9 @@ for epoch in range(epochs):
                                                                     balancer))
         if iterations % 500 == 499:
             samples = G(fixed_noise)
+            recon_real = D(real)
+            recon_fake = D(samples)
+            samples = torch.cat((real, recon_real, samples, recon_fake))
             save_samples(samples, "BEGAN_{0}.png".format(iterations))
         if iterations % 1000 == 999:
             torch.save(D, "./models/BEGAN_D.pt")
