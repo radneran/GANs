@@ -8,6 +8,8 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
 
+CELEBA_ROOT = "../../img_align_celeba"
+
 def get_fashion_mnist(bs, size=32, train=True, mu=0.5, std=0.5):
     fatrans = transforms.Compose(
         [transforms.Grayscale(3),
@@ -51,7 +53,7 @@ def get_classdata_cifar10(dataset, class_):
     return classdata
 
 
-def get_celebA(bs, root_dir, size=32, test_split=0.2,
+def get_celebA(bs, root_dir=CELEBA_ROOT, size=32, test_split=0.2,
                train=True, shuffle=True, mu=0.5, std=0.5):
     catrans = transforms.Compose(
         [transforms.Resize(size),

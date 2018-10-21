@@ -14,11 +14,12 @@ def weight_init(net, mean, std):
                 nn.init.constant_(m.bias, 0)
 
 class BEGAN_Generator(nn.Module):
-    def __init__(self, nz=32, bs=32):
+    def __init__(self, nz=32, bs=32, size=32):
         super().__init__()
+        self.h_size = size//4
         self.bs = bs
         self.nz = nz
-        self.fc = nn.Linear(32, 8 * 8 * 128)
+        self.fc = nn.Linear(32, self.h_size * self.h_size * 128)
         self.conv1 = nn.Conv2d(128,128, 3, 1, 1,bias=False)
         self.conv2 = nn.Conv2d(128,128, 3, 1, 1,bias=False)
         self.conv3 = nn.Conv2d(128,64, 3, 1, 1,bias=False)
@@ -31,7 +32,7 @@ class BEGAN_Generator(nn.Module):
         if z is None:
             z = torch.randn(self.bs,self.nz).cuda()
         z = F.elu(self.fc(z))
-        z = z.view(-1, 128, 8, 8)
+        z = z.view(-1, 128, self.h_size, self.h_size)
         z = self.ups(F.elu(self.conv2(F.elu(self.conv1(z)))))
         z = self.ups(F.elu(self.conv4(F.elu(self.conv3(z)))))
         z = self.conv7(F.elu(self.conv6(F.elu(self.conv5(z)))))
@@ -62,8 +63,9 @@ class Discriminator(nn.Module):
 
 class BEGAN_AutoEncoder(nn.Module):
     # AE as described in BEGAN
-    def __init__(self):
+    def __init__(self, size=32):
         super().__init__()
+        self.h_size = size//4
         self.input = nn.Conv2d(3,32, 3, 1,1,bias=False)
         self.conv1 = nn.Conv2d(32,32, 3, 1,1,bias=False)
         self.conv2 = nn.Conv2d(32,64, 3, 2,1,bias=False)
@@ -71,8 +73,8 @@ class BEGAN_AutoEncoder(nn.Module):
         self.conv4 = nn.Conv2d(64,128, 3, 2,1,bias=False)
         self.conv5 = nn.Conv2d(128,128, 3, 1,bias=False)
         self.conv6 = nn.Conv2d(128,128, 3, 1,2,bias=False)
-        self.fc1 = nn.Linear(8 * 8 * 128, 32)
-        self.fc2 = nn.Linear(32, 8 * 8 * 128)
+        self.fc1 = nn.Linear(self.h_size * self.h_size * 128, 32)
+        self.fc2 = nn.Linear(32, self.h_size * self.h_size * 128)
         self.conv7 = nn.Conv2d(128,128, 3, 1, 1,bias=False)
         self.conv8 = nn.Conv2d(128,128, 3, 1, 1,bias=False)
         self.conv9 = nn.Conv2d(128,64, 3, 1, 1,bias=False)
@@ -87,10 +89,10 @@ class BEGAN_AutoEncoder(nn.Module):
             F.elu(self.input(x))))))
         out = F.elu(self.conv4(F.elu(self.conv3(out))))
         out = F.elu(self.conv6(F.elu(self.conv5(out))))
-        out = out.view(-1,128*8*8)
+        out = out.view(-1,128*self.h_size*self.h_size)
         h = self.fc1(out)
         out = F.elu(self.fc2(h))
-        out = out.view(-1, 128, 8, 8)
+        out = out.view(-1, 128,self.h_size, self.h_size)
         out = self.ups(F.elu(self.conv8(F.elu(self.conv7(out)))))
         out = self.ups(F.elu(self.conv10(F.elu(self.conv9(out)))))
         out = self.conv13(F.elu(self.conv12(
