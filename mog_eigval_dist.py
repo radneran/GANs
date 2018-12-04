@@ -17,15 +17,15 @@ def kde(mu, tau, bbox=(-2, 2, -2, 2), save_file="", xlabel="", ylabel="", cmap='
     plt.tick_params(
         axis='x',  # changes apply to the x-axis
         which='both',  # both major and minor ticks are affected
-        bottom='off',  # ticks along the bottom edge are off
+        bottom='on',  # ticks along the bottom edge are off
         top='off',  # ticks along the top edge are off
-        labelbottom='off')  # labels along the bottom edge are off
+        labelbottom='on')  # labels along the bottom edge are off
     plt.tick_params(
         axis='y',  # changes apply to the x-axis
         which='both',  # both major and minor ticks are affected
-        left='off',  # ticks along the bottom edge are off
+        left='on',  # ticks along the bottom edge are off
         right='off',  # ticks along the top edge are off
-        labelleft='off')  # labels along the bottom edge are off
+        labelleft='on')  # labels along the bottom edge are off
 
     xx, yy = np.mgrid[bbox[0]:bbox[1]:300j, bbox[2]:bbox[3]:300j]
     positions = np.vstack([xx.ravel(), yy.ravel()])
@@ -34,9 +34,7 @@ def kde(mu, tau, bbox=(-2, 2, -2, 2), save_file="", xlabel="", ylabel="", cmap='
 
     if save_file != "":
         plt.savefig(save_file, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    plt.show()
 
 
 def complex_scatter(points, bbox=None, save_file="", xlabel="real part", ylabel="imaginary part", cmap='Blues'):

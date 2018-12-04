@@ -13,6 +13,31 @@ def weight_init(net, mean, std):
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
 
+def selu_init(module):
+    nn.init.normal_(module.weight, 0, 
+                    (1/module.in_features)**0.5)
+    if module.bias is not None:
+        nn.init.constant_(module.bias, 0)
+
+def get_modules_of_type(net, module_type):
+    for module in net.modules():
+        if isinstance(module, module_type):
+            yield(module)
+
+def identity(x):
+    return x
+            
+class SELU(nn.Module):
+    def forward(self, x):
+        alpha = 1.6732632423543772848170429916717
+        scale = 1.0507009873554804934193349852946
+        return scale * F.elu(x, alpha)
+
+class SmELU(nn.Module):
+    # smooth ELU approximation
+    def forward(self, x):
+        return F.softplus_(2*x + 2)/2 - 1
+         
 class BEGAN_Generator(nn.Module):
     def __init__(self, nz=32, bs=32, size=32):
         super().__init__()
@@ -100,43 +125,45 @@ class BEGAN_AutoEncoder(nn.Module):
         return out
 
 class DCGAN_Generator(nn.Module):
-    def __init__(self, nz=32, bs=32):
+    def __init__(self, nz=32, bs=32, act=torch.relu, bn=True):
         super().__init__()
         self.bs = bs
         self.nz = nz
+        self.act=act
         self.dconv1 = nn.ConvTranspose2d(nz,256,4,1,bias=False)
         self.dconv2 = nn.ConvTranspose2d(256,128,4,2,1,bias=False)
         self.dconv3 = nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False)
         self.dconv4 = nn.ConvTranspose2d(64, 3, 4, 2, 1, bias=False)
-        self.bnorm1 = nn.BatchNorm2d(256)
-        self.bnorm2 = nn.BatchNorm2d(128)
-        self.bnorm3 = nn.BatchNorm2d(64)
+        self.bnorm1 = nn.BatchNorm2d(256) if bn else identity
+        self.bnorm2 = nn.BatchNorm2d(128) if bn else identity
+        self.bnorm3 = nn.BatchNorm2d(64) if bn else identity
 
     def forward(self, z=None):
         if z is None:
             z = torch.randn(self.bs,self.nz).cuda()
         z = z.view(self.bs, self.nz, 1, 1)
-        out = torch.relu(self.bnorm1(self.dconv1(z)))
-        out = torch.relu(self.bnorm2(self.dconv2(out)))
-        out = torch.relu(self.bnorm3(self.dconv3(out)))
+        out = self.act(self.bnorm1(self.dconv1(z)))
+        out = self.act(self.bnorm2(self.dconv2(out)))
+        out = self.act(self.bnorm3(self.dconv3(out)))
         out = self.dconv4(out)
         return out
 
 class DCGAN_Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, act=F.leaky_relu, bn=True):
         super(DCGAN_Discriminator, self).__init__()
+        self.act=act
         self.conv1 = nn.Conv2d(3, 64, 4, 2, 1, bias=False)
         self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
         self.conv3 = nn.Conv2d(128, 256, 4, 2, 1, bias=False)
         self.conv4 = nn.Conv2d(256, 1, 4, bias=False)
-        self.bnorm3 = nn.BatchNorm2d(256)
-        self.bnorm2 = nn.BatchNorm2d(128)
-        self.bnorm1 = nn.BatchNorm2d(64)
+        self.bnorm3 = nn.BatchNorm2d(256) if bn else identity
+        self.bnorm2 = nn.BatchNorm2d(128) if bn else identity
+        self.bnorm1 = nn.BatchNorm2d(64) if bn else identity
 
     def forward(self, x):
-        out = F.leaky_relu(self.bnorm1(self.conv1(x)), negative_slope=0.2)
-        out = F.leaky_relu(self.bnorm2(self.conv2(out)), negative_slope=0.2)
-        out = F.leaky_relu(self.bnorm3(self.conv3(out)), negative_slope=0.2)
+        out = self.act(self.bnorm1(self.conv1(x)))
+        out = self.act(self.bnorm2(self.conv2(out)))
+        out = self.act(self.bnorm3(self.conv3(out)))
         out = self.conv4(out)
         return out
 
@@ -183,4 +210,3 @@ class MLP_Discriminator(nn.Module):
 
     def forward(self, x):
         return self.main(x)
-

@@ -6,14 +6,15 @@ from utils import *
 
 # hyper-params
 proportional_gain = 0.001  # lambda_k
-diversity_ratio = 0.3  # gamma
+diversity_ratio = 0.5  # gamma
 lr_generator = 1e-4
 lr_discriminator = 1e-4
 batch_size = 32
 z_dim = 32
 imsize = 32
-
-trainset, trainloader = get_celebA(batch_size, size=imsize)
+print("Loading dataset...")
+trainset, trainloader = get_cifar10(batch_size, train=False, size=imsize)
+print("Dataset loaded!")
 D = BEGAN_AutoEncoder(size=imsize).cuda()#torch.load("./models/BEGAN_D.pt")#
 G = BEGAN_Generator(size=imsize).cuda()#torch.load("./models/BEGAN_G.pt")#
 balancer = 0  # k
@@ -22,16 +23,16 @@ weight_init(G, 0, 0.02)
 g_optim = Adam(G.parameters(), lr=lr_generator, betas=(0.9, 0.999))
 d_optim = Adam(D.parameters(), lr=lr_discriminator, betas=(0.9, 0.999))
 
-epochs, iterations = 20, 0
+epochs, iterations = 100, 0
 fixed_noise = torch.randn(batch_size, z_dim).cuda()
 
-#_, _, d_state, d_optim_state = load_checkpoint("./models/BEGAN_D_2000.pt")
-#_, iterations, g_state, g_optim_state = load_checkpoint("./models/BEGAN_G_2000.pt")
+_, _, d_state, d_optim_state, _ = load_checkpoint("BEGANcifar10_D")
+_, iterations, g_state, g_optim_state, balancer = load_checkpoint("BEGANcifar10_G")
 
-#D.load_state_dict(d_state)
-#d_optim.load_state_dict(d_optim_state)
-#G.load_state_dict(g_state)
-#g_optim.load_state_dict(g_optim_state)
+D.load_state_dict(d_state)
+d_optim.load_state_dict(d_optim_state)
+G.load_state_dict(g_state)
+g_optim.load_state_dict(g_optim_state)
 # BEGAN maintains equilibrium between the losses of D and G using proportional
 # control theory. The balancer variable controls how much emphasis is placed on
 # the D(G()) in calculating D's loss. Balancer is updated using a feedback loop at
@@ -54,7 +55,7 @@ def began_loss(D, G, real):
 
 for epoch in range(epochs):
     for data in trainloader:
-        real = data
+        real,_ = data
         real = real.cuda()
         g_optim.zero_grad()
         d_optim.zero_grad()
@@ -79,9 +80,9 @@ for epoch in range(epochs):
             recon_real = D(real)
             recon_fake = D(samples)
             samples = torch.cat((real, recon_real, samples, recon_fake))
-            save_samples(samples, "BEGAN_{0}.png".format(iterations+1))
+            save_samples(samples, "BEGANcifar10_{0}.png".format(iterations+1))
         if iterations % 1000 == 999:
-            save_checkpoint(epoch, iterations, D, d_optim, "BEGAN_D", args=balancer)
-            save_checkpoint(epoch, iterations, G, g_optim, "BEGAN_G", args=balancer)
+            save_checkpoint(epoch, iterations, D, d_optim, "BEGANcifar10_D", args=balancer)
+            save_checkpoint(epoch, iterations, G, g_optim, "BEGANcifar10_G", args=balancer)
         iterations += 1
 
