@@ -36,8 +36,12 @@ def kde(mu, tau, bbox=None, save_file="", xlabel="", ylabel="", cmap='Blues', sh
 
     if save_file != "":
         plt.savefig(save_file, bbox_inches='tight')
+<<<<<<< HEAD
     if show:
         plt.show()
+=======
+    plt.show()
+>>>>>>> c26050ec3040ce96d19f1f316993cdb862c04b8b
 
 
 def complex_scatter(points, bbox=None, save_file="", xlabel="real part", ylabel="imaginary part", cmap='Blues'):

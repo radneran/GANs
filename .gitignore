@@ -4,6 +4,7 @@ data/
 samples/
 expt_results/
 .idea/
+models/
 
 # Created by https://www.gitignore.io/api/python,vim
 
