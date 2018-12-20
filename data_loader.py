@@ -6,18 +6,16 @@ import torchvision
 import torchvision.transforms.transforms as transforms
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+from Constants import *
 
-
-CELEBA_ROOT = "../../img_align_celeba"
-
-def get_fashion_mnist(bs, size=32, train=True, mu=0.5, std=0.5):
+def get_fashion_mnist(bs, size=32, train=True, mu=0.5, std=0.5, root=DATA_ROOT):
     fatrans = transforms.Compose(
         [transforms.Grayscale(3),
          transforms.Resize(size),
          transforms.ToTensor(),
          transforms.Normalize((mu, mu, mu), (std, std, std))]
     )
-    fmset = torchvision.datasets.FashionMNIST("./data",
+    fmset = torchvision.datasets.FashionMNIST(root,
                                               train=train,
                                               transform=fatrans,
                                               download=True)
@@ -28,12 +26,13 @@ def get_fashion_mnist(bs, size=32, train=True, mu=0.5, std=0.5):
     return fmset, fmloader
 
 
-def get_cifar10(bs, train=True, mu=0.5, std=0.5):
+def get_cifar10(bs, size=32, train=True, mu=0.5, std=0.5, root=DATA_ROOT):
     citrans = transforms.Compose(
-        [transforms.ToTensor(),
+         [transforms.Resize(size),
+          transforms.ToTensor(),
          transforms.Normalize((mu, mu, mu), (std, std, std))]
     )
-    ciset = torchvision.datasets.CIFAR10("./data", train=train,
+    ciset = torchvision.datasets.CIFAR10(root, train=train,
                                          transform=citrans,
                                          download=True)
     ciloader = DataLoader(ciset,
@@ -93,3 +92,4 @@ class CelebADataset(Dataset):
         image = Image.open(path)
         return self.transform(image) if self.transform \
             else image
+

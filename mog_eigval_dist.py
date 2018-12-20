@@ -5,7 +5,9 @@ from scipy import stats
 from matplotlib import pyplot as plt
 
 
-def kde(mu, tau, bbox=(-2, 2, -2, 2), save_file="", xlabel="", ylabel="", cmap='Blues'):
+def kde(mu, tau, bbox=None, save_file="", xlabel="", ylabel="", cmap='Blues', show=False):
+    if not bbox:
+        bbox = [np.amin(mu, axis=0)-0.2, np.amax(mu,axis=0)+0.2, np.amin(tau,axis=0)-0.2, np.amax(tau,axis=0)+0.2]
     values = np.vstack([mu, tau])
     kernel = sp.stats.gaussian_kde(values)
 
@@ -17,15 +19,15 @@ def kde(mu, tau, bbox=(-2, 2, -2, 2), save_file="", xlabel="", ylabel="", cmap='
     plt.tick_params(
         axis='x',  # changes apply to the x-axis
         which='both',  # both major and minor ticks are affected
-        bottom='off',  # ticks along the bottom edge are off
+        bottom='on',  # ticks along the bottom edge are off
         top='off',  # ticks along the top edge are off
-        labelbottom='off')  # labels along the bottom edge are off
+        labelbottom='on')  # labels along the bottom edge are off
     plt.tick_params(
         axis='y',  # changes apply to the x-axis
         which='both',  # both major and minor ticks are affected
-        left='off',  # ticks along the bottom edge are off
+        left='on',  # ticks along the bottom edge are off
         right='off',  # ticks along the top edge are off
-        labelleft='off')  # labels along the bottom edge are off
+        labelleft='on')  # labels along the bottom edge are off
 
     xx, yy = np.mgrid[bbox[0]:bbox[1]:300j, bbox[2]:bbox[3]:300j]
     positions = np.vstack([xx.ravel(), yy.ravel()])
@@ -34,8 +36,7 @@ def kde(mu, tau, bbox=(-2, 2, -2, 2), save_file="", xlabel="", ylabel="", cmap='
 
     if save_file != "":
         plt.savefig(save_file, bbox_inches='tight')
-        plt.close(fig)
-    else:
+    if show:
         plt.show()
 
 
@@ -59,3 +60,23 @@ def complex_scatter(points, bbox=None, save_file="", xlabel="real part", ylabel=
         plt.close(fig)
     else:
         plt.show()
+
+def plot_decision_boundary2d(model, bbox=[-2,2,-2,2], save_file=None):
+    xx, yy = np.mgrid([bbox[0]:bbox[1]:300j, bbox[2]:bbox[3]:300j])
+    """# X - some data in 2dimensional np.array
+
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+
+# here "model" is your model's prediction (classification) function
+Z = model(np.c_[xx.ravel(), yy.ravel()]) 
+
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=pl.cm.Paired)
+plt.axis('off')
+
+# Plot also the training points
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)"""
